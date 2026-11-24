@@ -182,22 +182,23 @@ const httpServer = createServer(async (req, res) => {
   if (req.method === 'POST' && req.url === '/eda-windows/select') {
     let body = '';
     for await (const chunk of req) body += chunk;
+    let windowId;
     try {
-      const payload = JSON.parse(body);
-      const { windowId } = payload;
-      if (!edaClients.has(windowId)) {
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: `EDA window "${windowId}" not found` }));
-        return;
-      }
-      activeEdaWindowId = windowId;
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: true, activeWindowId }));
+      ({ windowId } = JSON.parse(body));
     }
     catch {
       res.writeHead(400, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Invalid request body' }));
+      return;
     }
+    if (!edaClients.has(windowId)) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: `EDA window "${windowId}" not found` }));
+      return;
+    }
+    activeEdaWindowId = windowId;
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true, activeWindowId: activeEdaWindowId }));
     return;
   }
 
